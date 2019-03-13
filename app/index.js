@@ -1,26 +1,48 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-class Test extends React.Component {
+function List(props) {
+    const items = this.props.items;
+    return (
+        <ol>
+            { items.map( item => <ListItem key={item.id} desc={item.desc} complete={item.complete} /> ) }
+        </ol>
+    )
+}
+
+function ListItem(props) {
+    return (
+        <li className={this.props.complete}>{this.props.desc}</li>
+    )
+}
+
+class Main extends React.Component {
     constructor() {
         super();
         this.state = {
-            beep : 'beep'
+            tasks : [
+                { id : 1, desc : 'do A', complete : false },
+                { id : 2, desc : 'do B', complete : false },
+                { id : 3, desc : 'do C', complete : true }
+            ]
         };
-        this.boop = this.boop.bind(this);
     }
 
     render() {
         return (
-            <h1> {this.state.beep} </h1>
+            <div>
+                <div>
+                    <h1> To-Do List </h1>
+                </div>
+                <input type='text' placeholder='Enter new task here' id='inp'></input>
+                <div id='container'>
+                    <List items={this.state.tasks} />
+                </div>
+            </div>
         )
-    }
-
-    boop() {
-        this.setState({ beep : 'boop' })
     }
 }
 
 ReactDOM.render(
-    <Test />,
+    <Main />,
     document.getElementById(app))
