@@ -2,25 +2,25 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 
-function InputBar() {
-    console.log('rendering input bar');
+function InputBar(props) {
     return (
         <input id="inp" 
         type="text" 
         placeholder="Enter a new task here" 
         maxlength="50" 
-        size="50">
+        size="50"
+        value={props.value}
+        onChange={ (event) => props.callback(event) }>
         </input>
     )
 }
 
 function SubmitButton(props) {
-    console.log('rendering submit button');
     const addEvent = props.callback;
     return (
         <button id="submit"
         type="button"
-        onClick={ () => console.log( document.getElementById('inp') ) }
+        onClick={ () => addEvent() }
         >
         Submit
         </button>
@@ -28,14 +28,12 @@ function SubmitButton(props) {
 }
 
 function Delete(props) {
-    console.log('rendering delete button');
     return (
         <button type='button' onClick={props.callback} >X</button>
     )
 }
 
 function Listed(props) {
-    console.log('rendering list item');
     const displayContent = props.task.content.padEnd(50, ' ')
     return (
         <li id={props.task.id}>{displayContent}<Delete callback={props.callback} /></li>
@@ -44,28 +42,38 @@ function Listed(props) {
 
 class ToDoList extends React.Component {
     constructor() {
-        console.log('making todo component')
         super();
         this.state = {
-            tasks : []
+            tasks : [],
+            inpval : ''
         };
         this.removeTask = this.removeTask.bind(this);
         this.addEvent = this.addEvent.bind(this);
+        this.updateInput = this.updateInput.bind(this);
+    }
+
+    updateInput(event) {
+        this.setState({
+            inpval : event.target.value
+        })
     }
 
     async componentDidMount() {
-        console.log('grabbing from api')
         const allTasks = await axios.get('/api/tasks');
         this.setState({
             tasks : allTasks.data
         });
     }
 
-    async addEvent(newItem) {
-        console.log('adding ', this);
+    async addEvent() {
         const added = await axios.post('/api/tasks', {
-            content : newItem
+            content : this.state.inpval
         })
+        const joined = this.state.tasks.concat([added.data]);
+        this.setState({
+            tasks : joined,
+            inpval : ''
+        });
     }
 
     async removeTask(event) {
@@ -77,12 +85,11 @@ class ToDoList extends React.Component {
     }
 
     render() {
-        console.log('rendering whole page')
         return (
             <div>
                 <h1> To Do List </h1>
                 <div id="interactables">
-                    <InputBar /><p></p>
+                    <InputBar value={this.state.inpval} callback={this.updateInput}/><p></p>
                     <SubmitButton callback={this.addEvent} />
                 </div>
                 <div>
