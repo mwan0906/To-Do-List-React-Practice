@@ -3,34 +3,39 @@ import ReactDOM from 'react-dom';
 import axios from 'axios';
 
 function InputBar() {
+    console.log('rendering input bar');
     return (
-    <input id="inp" 
-    type="text" 
-    placeholder="Enter a new task here" 
-    maxlength="50" 
-    size="50">
-    </input>
+        <input id="inp" 
+        type="text" 
+        placeholder="Enter a new task here" 
+        maxlength="50" 
+        size="50">
+        </input>
     )
 }
 
 function SubmitButton(props) {
+    console.log('rendering submit button');
     const addEvent = props.callback;
     return (
-    <button id="submit"
-    type="button"
-    onClick={addEvent( 'test adding' )}>
-    Submit
-    </button>
+        <button id="submit"
+        type="button"
+        onClick={ () => console.log( document.getElementById('inp') ) }
+        >
+        Submit
+        </button>
     )
 }
 
 function Delete(props) {
+    console.log('rendering delete button');
     return (
         <button type='button' onClick={props.callback} >X</button>
     )
 }
 
 function Listed(props) {
+    console.log('rendering list item');
     const displayContent = props.task.content.padEnd(50, ' ')
     return (
         <li id={props.task.id}>{displayContent}<Delete callback={props.callback} /></li>
@@ -39,6 +44,7 @@ function Listed(props) {
 
 class ToDoList extends React.Component {
     constructor() {
+        console.log('making todo component')
         super();
         this.state = {
             tasks : []
@@ -48,31 +54,30 @@ class ToDoList extends React.Component {
     }
 
     async componentDidMount() {
+        console.log('grabbing from api')
         const allTasks = await axios.get('/api/tasks');
         this.setState({
             tasks : allTasks.data
         });
     }
 
-    addEvent(newItem) {
-        console.log('adding ', newItem);
-/*         const toAdd = {
-            content : newItem,
-            dueDate : new Date()
-        }
-        const joined = this.state.tasks.concat([toAdd]);
-        this.setState({
-            tasks : joined
-        }); */
+    async addEvent(newItem) {
+        console.log('adding ', this);
+        const added = await axios.post('/api/tasks', {
+            content : newItem
+        })
     }
 
-    removeTask(event) {
+    async removeTask(event) {
         const { target } = event;
         const listItem = target.parentNode;
+        const id = listItem.id;
+        await axios.delete(`/api/tasks/${id}`);
         listItem.remove();
     }
 
     render() {
+        console.log('rendering whole page')
         return (
             <div>
                 <h1> To Do List </h1>
