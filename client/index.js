@@ -10,7 +10,8 @@ function InputBar(props) {
         maxlength="50" 
         size="50"
         value={props.value}
-        onChange={ event => props.callback(event) }
+        onChange={ event => props.changeInput(event) }
+        onKeyDown={ event => props.keyHandler(event) }
         >
         </input>
     )
@@ -57,8 +58,9 @@ function Edit(props) {
 
 function Listed(props) {
     const displayContent = props.task.content.padEnd(50, ' ')
+    const isBeingEdited = (props.task.id == props.editingItem);
     return (
-        <li id={props.task.id}>
+        <li id={props.task.id} className={isBeingEdited ? 'editing' : ''} >
         {displayContent}
         <Edit callback={props.edit} isEditing={props.isEditing} />
         <Delete callback={props.delete} />
@@ -77,13 +79,36 @@ class ToDoList extends React.Component {
         };
         this.removeTask = this.removeTask.bind(this);
         this.addEvent = this.addEvent.bind(this);
-        this.updateInput = this.updateInput.bind(this);
         this.editTask = this.editTask.bind(this);
         this.editOn = this.editOn.bind(this);
         this.editOff = this.editOff.bind(this);
+        this.keyHandler = this.keyHandler.bind(this);
+        this.changeInput = this.changeInput.bind(this);
     }
 
-    updateInput(event) {
+    componentDidMount() {
+        this.updoot()
+    }
+
+    async updoot() {
+        const allTasks = await axios.get('/api/tasks');
+        this.setState({
+            tasks : allTasks.data
+        });
+    }
+
+    keyHandler(event) {
+        event.persist();
+        if (event.keyCode == 13) {
+            if (this.state.isEditing) {
+                this.editTask()
+            } else {
+                this.addEvent()
+            }
+        }
+    }
+
+    changeInput(event) {
         this.setState({
             inpval : event.target.value
         })
@@ -95,6 +120,7 @@ class ToDoList extends React.Component {
             editingItem : null,
             inpval : ''
         })
+        document.getElementById('inp').focus();
     }
 
     async editOn(event) {
@@ -105,13 +131,7 @@ class ToDoList extends React.Component {
             editingItem : id,
             inpval : node.data.content
         })
-    }
-
-    async componentDidMount() {
-        const allTasks = await axios.get('/api/tasks');
-        this.setState({
-            tasks : allTasks.data
-        });
+        document.getElementById('inp').focus();
     }
 
     async addEvent() {
@@ -126,22 +146,29 @@ class ToDoList extends React.Component {
     }
 
     async removeTask(event) {
+        console.log('removing task')
         const { target } = event;
         const listItem = target.parentNode;
         const id = listItem.id;
         await axios.delete(`/api/tasks/${id}`);
-        listItem.remove();
+        document.getElementById('inp').focus();
+        if (id == this.state.editingItem) {
+            this.editOff();
+        }
+        await this.updoot()
+
+        console.log('removed task, new state', this.state)
     }
 
     async editTask() {
         await axios.put(`/api/tasks/${this.state.editingItem}`, {
             content : this.state.inpval
         })
+        console.log('task edited to', this.state.inpval);
+
+        this.updoot();
         this.editOff();
-        const allTasks = await axios.get('/api/tasks');
-        this.setState({
-            tasks : allTasks.data
-        });
+        document.getElementById('inp').focus();
     }
 
     render() {
@@ -153,6 +180,8 @@ class ToDoList extends React.Component {
                     <InputBar 
                         value={this.state.inpval} 
                         callback={this.updateInput}
+                        keyHandler={this.keyHandler} 
+                        changeInput={this.changeInput}
                         /><p></p>
                     {this.state.isEditing && <CancelButton callback={this.editOff} />}
                     <SubmitButton 
@@ -167,6 +196,7 @@ class ToDoList extends React.Component {
                     <Listed key={task.id} 
                         task={task} 
                         isEditing={this.state.isEditing}
+                        editingItem={this.state.editingItem}
                         edit={this.editOn} 
                         delete={this.removeTask} /> )}
                 </ol>
