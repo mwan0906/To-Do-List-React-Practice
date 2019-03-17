@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run start-server & npm run build-watch",
+    "build-watch": "webpack -w",
+    "start-server": "nodemon server/routes.js --ignore public"
   },
   "repository": {
     "type": "git",
@@ -17,11 +20,20 @@
   },
   "homepage": "https://github.com/mwan0906/To-Do-List-React-Practice#readme",
   "dependencies": {
+    "@babel/core": "^7.3.4",
+    "@babel/preset-react": "^7.0.0",
+    "axios": "^0.18.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.0.5",
+    "babel-preset-env": "^1.7.0",
     "express": "^4.16.4",
     "path": "^0.12.7",
+    "pg": "^7.9.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
-    "webpack": "^4.29.6"
+    "sequelize": "^5.1.0",
+    "webpack": "^4.29.6",
+    "webpack-dev-server": "^3.2.1"
   },
   "devDependencies": {
     "webpack-cli": "^3.3.0"

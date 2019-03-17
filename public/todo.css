@@ -1,0 +1,48 @@
+body {
+    text-align: center;
+    font-family: monospace;
+    background: url('paper.jpg') no-repeat center fixed; 
+    background-size: cover;
+    font-size: 200%;
+}
+
+input {
+    font-size: 100%;
+    font-family: monospace;
+}
+
+button {
+    font-size: 100%;
+    font-family: monospace;
+}
+
+ol {
+    display: inline-block;
+}
+
+li {
+    padding: 5px;
+    white-space: pre;
+    border: 1px solid black;
+}
+
+li:nth-of-type(odd) {
+    background-color: lightgray;
+}
+li:nth-of-type(even) {
+    background-color: whitesmoke;
+}
+
+.editing {
+    color: grey;
+    font-style: italic;
+}
+
+#cancel {
+    color: red;
+}
+
+#interactables {
+    display: inline-block;
+    text-align: right;
+}
