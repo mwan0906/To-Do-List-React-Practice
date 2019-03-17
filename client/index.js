@@ -10,33 +10,59 @@ function InputBar(props) {
         maxlength="50" 
         size="50"
         value={props.value}
-        onChange={ (event) => props.callback(event) }>
+        onChange={ event => props.callback(event) }
+        >
         </input>
     )
 }
 
 function SubmitButton(props) {
-    const addEvent = props.callback;
+    const clickEvent = props.isEditing ? props.edit : props.add;
     return (
         <button id="submit"
         type="button"
-        onClick={ () => addEvent() }
+        onClick={ () => clickEvent() }
         >
         Submit
         </button>
     )
 }
 
+function CancelButton(props) {
+    return (
+        <button id='cancel'
+        type='button'
+        onClick={ props.callback }>
+        Cancel
+        </button>
+    )
+}
+
 function Delete(props) {
     return (
-        <button type='button' onClick={props.callback} >X</button>
+        <button type='button' 
+        onClick={props.callback}
+        >X</button>
+    )
+}
+function Edit(props) {
+    const style = props.isEditing ? 'hidden' : 'visible';
+    return (
+        <button type='button' 
+        onClick={event => props.callback(event)}
+        style={{visibility : style}}
+        >E</button>
     )
 }
 
 function Listed(props) {
     const displayContent = props.task.content.padEnd(50, ' ')
     return (
-        <li id={props.task.id}>{displayContent}<Delete callback={props.callback} /></li>
+        <li id={props.task.id}>
+        {displayContent}
+        <Edit callback={props.edit} isEditing={props.isEditing} />
+        <Delete callback={props.delete} />
+        </li>
     )
 }
 
@@ -45,16 +71,39 @@ class ToDoList extends React.Component {
         super();
         this.state = {
             tasks : [],
-            inpval : ''
+            inpval : '',
+            isEditing : false,
+            editingItem : null
         };
         this.removeTask = this.removeTask.bind(this);
         this.addEvent = this.addEvent.bind(this);
         this.updateInput = this.updateInput.bind(this);
+        this.editTask = this.editTask.bind(this);
+        this.editOn = this.editOn.bind(this);
+        this.editOff = this.editOff.bind(this);
     }
 
     updateInput(event) {
         this.setState({
             inpval : event.target.value
+        })
+    }
+
+    editOff() {
+        this.setState({
+            isEditing : false,
+            editingItem : null,
+            inpval : ''
+        })
+    }
+
+    async editOn(event) {
+        const id = event.target.parentNode.id;
+        const node = await axios.get(`/api/tasks/${id}`);
+        this.setState({
+            isEditing : true,
+            editingItem : id,
+            inpval : node.data.content
         })
     }
 
@@ -84,18 +133,42 @@ class ToDoList extends React.Component {
         listItem.remove();
     }
 
+    async editTask() {
+        await axios.put(`/api/tasks/${this.state.editingItem}`, {
+            content : this.state.inpval
+        })
+        this.editOff();
+        const allTasks = await axios.get('/api/tasks');
+        this.setState({
+            tasks : allTasks.data
+        });
+    }
+
     render() {
         return (
             <div>
                 <h1> To Do List </h1>
+
                 <div id="interactables">
-                    <InputBar value={this.state.inpval} callback={this.updateInput}/><p></p>
-                    <SubmitButton callback={this.addEvent} />
+                    <InputBar 
+                        value={this.state.inpval} 
+                        callback={this.updateInput}
+                        /><p></p>
+                    {this.state.isEditing && <CancelButton callback={this.editOff} />}
+                    <SubmitButton 
+                        isEditing={this.state.isEditing} 
+                        add={this.addEvent} 
+                        edit={this.editTask}/>
                 </div>
+
                 <div>
                 <ol>
                     {this.state.tasks.map( task =>
-                    <Listed key={task.id} task={task} callback={this.removeTask} /> )}
+                    <Listed key={task.id} 
+                        task={task} 
+                        isEditing={this.state.isEditing}
+                        edit={this.editOn} 
+                        delete={this.removeTask} /> )}
                 </ol>
                 </div>
             </div>
