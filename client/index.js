@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import axios from 'axios';
 
+const maxPerPage = 20;
+
 function InputBar(props) {
     return (
         <input id="inp" 
@@ -74,16 +76,25 @@ class ToDoList extends React.Component {
         this.state = {
             tasks : [],
             inpval : '',
+
+            pageMode : false,
+            currentPage : 0,
+            totalPages : 0,
+
             isEditing : false,
             editingItem : null
         };
         this.removeTask = this.removeTask.bind(this);
         this.addEvent = this.addEvent.bind(this);
+
         this.editTask = this.editTask.bind(this);
         this.editOn = this.editOn.bind(this);
         this.editOff = this.editOff.bind(this);
+
         this.keyHandler = this.keyHandler.bind(this);
         this.changeInput = this.changeInput.bind(this);
+
+        this.changePage = this.changePage.bind(this);
     }
 
     componentDidMount() {
@@ -91,9 +102,32 @@ class ToDoList extends React.Component {
     }
 
     async updoot() {
-        const allTasks = await axios.get('/api/tasks');
+        let allTasks = (await axios.get('/api/tasks')).data;
         this.setState({
-            tasks : allTasks.data
+            totalPages : Math.ceil(allTasks.length / maxPerPage)
+        })
+        console.log(this.state.totalPages, Math.ceil(allTasks.length / maxPerPage));
+        if (this.state.totalPages > 1) {
+            if (!this.state.pageMode) {
+                this.setState({
+                    pageMode : true,
+                    currentPage : 1,
+                    totalPages : Math.ceil(allTasks.length / maxPerPage)
+                });
+            }
+            const begin = maxPerPage * (this.state.currentPage - 1);
+            allTasks = allTasks.slice(begin, begin + maxPerPage)
+        }
+        else if (this.state.pageMode) {
+            if (allTasks.length < maxPerPage) {
+                this.setState({
+                    pageMode : false,
+                    currentPage : 0
+                });
+            }
+        }
+        this.setState({
+            tasks : allTasks
         });
     }
 
@@ -143,6 +177,7 @@ class ToDoList extends React.Component {
             tasks : joined,
             inpval : ''
         });
+        this.updoot();
     }
 
     async removeTask(event) {
@@ -169,6 +204,14 @@ class ToDoList extends React.Component {
         this.updoot();
         this.editOff();
         document.getElementById('inp').focus();
+    }
+
+    changePage(dir) {
+        const newPage = this.state.currentPage + dir;
+        this.setState({
+            currentPage : newPage
+        });
+        this.updoot();
     }
 
     render() {
@@ -201,9 +244,24 @@ class ToDoList extends React.Component {
                         delete={this.removeTask} /> )}
                 </ol>
                 </div>
+
+                {this.state.pageMode && <PageSelector 
+                    page={this.state.currentPage} 
+                    max={this.state.totalPages}
+                    func={this.changePage}/>}
             </div>
         )
     }
 };
+
+function PageSelector(props) {
+    return(
+        <div>
+            {props.page > 1 && <button onClick={() => props.func(-1)}>&lt;</button>}
+            &emsp;Page {props.page}/{props.max}&emsp;
+            {props.page < props.max && <button onClick={() => props.func(1)}>&gt;</button>}
+        </div>
+    )
+}
 
 ReactDOM.render( <ToDoList />, document.getElementById('app') );

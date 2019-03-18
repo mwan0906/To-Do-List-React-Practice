@@ -12,9 +12,6 @@ const Task = db.define('Task', {
     isComplete : {
         type : Sequelize.BOOLEAN,
         defaultValue : false
-    },
-    dueDate : {
-        type: Sequelize.DATE
     }
 })
 
