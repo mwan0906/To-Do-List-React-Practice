@@ -4,6 +4,21 @@ import axios from 'axios';
 
 const maxPerPage = 20;
 
+function debounce(func, wait) {
+	var timeOut;
+    return function() {
+		const context = this;
+		const args = arguments;
+		var later = function() {
+			timeOut = null;
+			func.apply(context, args);
+        }
+
+		clearTimeout(timeOut);
+		timeOut = setTimeout(later, wait);
+    }
+}
+
 function InputBar(props) {
     return (
         <input id="inp" 
@@ -106,25 +121,27 @@ class ToDoList extends React.Component {
         this.setState({
             totalPages : Math.ceil(allTasks.length / maxPerPage)
         })
-        console.log(this.state.totalPages, Math.ceil(allTasks.length / maxPerPage));
+        console.log('total pages: ', this.state.totalPages);
+
         if (this.state.totalPages > 1) {
             if (!this.state.pageMode) {
+                console.log('page mode on')
                 this.setState({
                     pageMode : true,
                     currentPage : 1,
                     totalPages : Math.ceil(allTasks.length / maxPerPage)
                 });
             }
+            console.log('page mode continued')
             const begin = maxPerPage * (this.state.currentPage - 1);
             allTasks = allTasks.slice(begin, begin + maxPerPage)
         }
-        else if (this.state.pageMode) {
-            if (allTasks.length < maxPerPage) {
-                this.setState({
-                    pageMode : false,
-                    currentPage : 0
-                });
-            }
+        else if (this.state.pageMode && allTasks.length <= maxPerPage) {
+            console.log('page mode ended')
+            this.setState({
+                pageMode : false,
+                currentPage : 0
+            });
         }
         this.setState({
             tasks : allTasks
@@ -177,11 +194,10 @@ class ToDoList extends React.Component {
             tasks : joined,
             inpval : ''
         });
-        this.updoot();
+        await this.updoot();
     }
 
     async removeTask(event) {
-        console.log('removing task')
         const { target } = event;
         const listItem = target.parentNode;
         const id = listItem.id;
@@ -191,15 +207,12 @@ class ToDoList extends React.Component {
             this.editOff();
         }
         await this.updoot()
-
-        console.log('removed task, new state', this.state)
     }
 
     async editTask() {
         await axios.put(`/api/tasks/${this.state.editingItem}`, {
             content : this.state.inpval
         })
-        console.log('task edited to', this.state.inpval);
 
         this.updoot();
         this.editOff();
@@ -234,7 +247,10 @@ class ToDoList extends React.Component {
                 </div>
 
                 <div>
-                <ol>
+                <ol start={
+                    (!this.state.pageMode || this.currentPage == 1) ?
+                    1 : ((maxPerPage * (this.state.currentPage - 1)) + 1)
+                    }>
                     {this.state.tasks.map( task =>
                     <Listed key={task.id} 
                         task={task} 
